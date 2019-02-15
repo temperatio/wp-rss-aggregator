@@ -107,8 +107,9 @@ function wprss_is_blacklisted( $permalink ) {
 		'meta_key'		=>	'wprss_permalink',
 		'meta_value'	=>	$permalink
 	));
+
 	// Return TRUE if the query returned a result, FALSE otherwise
-	return $query->have_posts();
+	return apply_filters('wprss_is_permalink_blacklisted', $query->have_posts(), $permalink);
 }
 
 
