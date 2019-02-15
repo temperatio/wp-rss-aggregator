@@ -52,10 +52,13 @@ function wprss_fetch_insert_single_feed_items($feed_id)
     wprss_log('Force feed flag removed', null, WPRSS_LOG_LEVEL_SYSTEM);
 
     // Fetch new items
+    do_action('wprss_before_fetching_new_items', $feed_id);
     $new_items = wprss_get_feed_source_new_items($feed_id);
+    $new_items = apply_filters('wprss_feed_source_fetched_items_to_import', $new_items, $feed_id);
     $num_new_items = count($new_items);
 
     // Make room for the new items by deleting older ones, if necessary
+    do_action('wprss_before_truncating_items_on_import', $feed_id, $new_items);
     wprss_make_room_for_new_feed_items($feed_id, $num_new_items);
 
     update_post_meta($feed_id, 'wprss_last_update', $last_update_time = time());
@@ -65,6 +68,7 @@ function wprss_fetch_insert_single_feed_items($feed_id)
     // Insert the items into the db
     if ($num_new_items > 0) {
         wprss_log(sprintf('Inserting %d items into the database', count($new_items)), null, WPRSS_LOG_LEVEL_INFO);
+        do_action('wprss_before_saving_fetched_items', $feed_id, $new_items);
         wprss_items_insert_post($new_items, $feed_id);
     }
 
