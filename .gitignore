@@ -11,3 +11,4 @@ log-*.txt
 /node_modules/
 
 /js/update.min.js
+/js/common.min.js

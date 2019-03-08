@@ -158,3 +158,23 @@
         ), $deps);
         wp_enqueue_script($handle, $src, $deps, $ver, $in_footer);
     }
+
+    /**
+     * @param $handle
+     * @param string $src
+     * @param array $deps
+     * @param bool $ver
+     * @param string $media
+     */
+    function wprss_plugin_enqueue_app_styles( $handle, $src = '', $deps = array(), $ver = false, $media = 'all' ) {
+        /*
+         * Registering common plugin styles. This file holds all styles that can be reused
+         * with different plugin's parts. Like custom button styles or transitions.
+         */
+        wp_enqueue_style('wpra-common', WPRSS_CSS . 'common.min.css');
+
+        /*
+         * Requested styles registration.
+         */
+        wp_enqueue_style($handle, $src, $deps, $ver, $media);
+    }

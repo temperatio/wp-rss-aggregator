@@ -3,6 +3,7 @@ var webpack = require('webpack')
 var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 var ExtractTextPlugin = require('extract-text-webpack-plugin')
 var VueLoaderPlugin = require('vue-loader/lib/plugin')
+var path = require('path')
 
 function makePlugins (plugins) {
   let base = [
@@ -22,12 +23,14 @@ function makePlugins (plugins) {
   return base.concat(plugins)
 }
 
-let config = {
+module.exports = {
   context: __dirname,
   entry: {
+    common: './css/src/common/index.scss',
     intro: './js/src/intro/index.js',
     plugins: './js/src/plugins/index.js',
     update: './css/src/update/index.scss',
+    'feed-items': './js/src/feed-items/index.js',
   },
   output: {
     path: __dirname + '/js',
@@ -67,6 +70,7 @@ let config = {
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@rebelcode/std-lib': '@rebelcode/std-lib/dist/std-lib.umd.js',
+      'vue-wp-list-table': path.resolve(__dirname, '../../../../../vue-wp-list-table-component/'),
     },
     extensions: ['*', '.js', '.vue', '.json']
   },
@@ -97,5 +101,3 @@ let config = {
     })
   ])
 }
-
-module.exports = config

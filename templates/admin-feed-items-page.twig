@@ -1,0 +1,81 @@
+<div class="wrap">
+    <h1 class="wp-heading-inline">Feed Sources</h1>
+    <a href="http://scotchbox.local/wp/wp-admin/post-new.php" class="page-title-action">Add New</a>
+    <hr class="wp-header-end">
+
+    <div id="wpra-feed-items-app">
+        <!-- APP MOUNTED HERE -->
+    </div>
+
+    <br class="clear">
+
+    <script type="text/x-template" id="wpra-feed-items-template">
+        {% raw %}
+        <div>
+            <ul class="subsubsub">
+                <li class="all"><a href="edit.php?post_type=post" class="current" aria-current="page">All <span class="count">(1)</span></a> |</li>
+                <li class="publish"><a href="edit.php?post_status=publish&amp;post_type=post">Active <span class="count">(1)</span></a></li>
+            </ul>
+            <p class="search-box">
+                <label class="screen-reader-text" for="post-search-input">Search Feed Sources:</label>
+                <input type="search" id="post-search-input" name="s" value="">
+                <input type="submit" id="search-submit" class="button" value="Search">
+            </p>
+            <ListTable
+                    class="feed-list-table"
+                    @checked="checked"
+                    :row-class="rowClassGetter"
+                    :columns="columns"
+                    :rows="list"
+            >
+                {% endraw %}
+                {{ wpra_feed_columns_markup|raw }}
+                {% raw %}
+                <div slot="enabled" slot-scope="data">
+                    <v-switch v-model="data.row.enabled" :id="data.row.id.toString()"/>
+                </div>
+                <div slot="source" slot-scope="data">
+                    <div><strong>{{ data.row.title }}</strong> <small>ID: {{ data.row.id }}</small></div>
+                    <div>{{ data.row.url }}</div>
+                </div>
+                <div slot="processing" slot-scope="data">
+                    <div><strong>Next update in {{ data.row.update.next }} minutes</strong></div>
+                    <div>Last updated {{ data.row.update.last }} minutes ago</div>
+                    <div>Last update imported {{ data.row.update.imported }} feed items</div>
+                </div>
+                <div slot="imported" slot-scope="{ row }">
+                    <div class="flex-centered imported">
+                        <span class="">{{ row.imported }}</span>
+                    </div>
+                    <button class="button button-clear flex-centered button-color-primary">
+                        <span class="dashicons dashicons-update"></span>
+                    </button>
+                    <button class="button button-clear flex-centered">
+                        <span class="dashicons dashicons-trash"></span>
+                    </button>
+                </div>
+            </ListTable>
+            <BottomPanel v-if="selected.length">
+                <div class="flex-row">
+                    <div class="flex-col">
+                        <div class="wpra-bottom-panel__title">Bulk Actions</div>
+                        <v-switch id="test" class="inline-switch"></v-switch>
+                        | <a href="#">Trash Sources</a>
+                        | <a href="#">Fetch Items</a>
+                        | <a href="#">Delete Items</a>
+                    </div>
+                    <div class="flex-col">
+                        <div class="wpra-bottom-panel__title">Set Update Interval</div>
+                        <select name="" id="">
+                            <option value="">2 hours</option>
+                        </select>
+                    </div>
+                    <div class="flex-col">
+                        <code>[wp-rss-aggregator="{{ selected.join(',') }}"]</code>
+                    </div>
+                </div>
+            </BottomPanel>
+        </div>
+        {% endraw %}
+    </script>
+</div>

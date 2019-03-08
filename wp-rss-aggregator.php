@@ -297,6 +297,9 @@
 	/* Add components to the plugins page  */
 	require_once(WPRSS_INC . 'admin-plugins.php');
 
+	/* Add components to the feed items page  */
+	require_once(WPRSS_INC . 'admin-temp-feed-list-page.php');
+
 	/* Access to feed */
 	require_once ( WPRSS_INC . 'feed-access.php' );
 
