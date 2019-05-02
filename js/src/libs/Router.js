@@ -100,7 +100,6 @@ export default class Router {
 
   parseLocation (location) {
     this.updateParams(getJsonFromUrl(location.search))
-    console.info('ROUTE PARSE LOCATION PARAMS', getJsonFromUrl(location.search))
     return location.pathname + location.search
   }
 
