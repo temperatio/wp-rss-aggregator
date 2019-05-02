@@ -1,4 +1,5 @@
 import Router from 'app/libs/Router'
+import { setGlobal, revertGlobal } from './../../global'
 
 const makeRouter = (routes = null, options = {}) => {
   routes = routes || [{
@@ -11,15 +12,15 @@ const makeRouter = (routes = null, options = {}) => {
   const history = {
     pushState: () => {}
   }
-  global.window = {
+  setGlobal('window', {
     history
-  }
+  })
 
   // window.location fake
   const location = {
     pathname: 'pre-a'
   }
-  global.location = location
+  setGlobal('location', location)
 
   // router app fake
   const app = {
@@ -44,7 +45,8 @@ const makeRouter = (routes = null, options = {}) => {
 
 describe('Router.js', () => {
   afterEach(() => {
-    sinon.restore();
+    sinon.restore()
+    revertGlobal()
   })
 
   describe('public api', () => {

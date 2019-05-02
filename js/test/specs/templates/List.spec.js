@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import List from 'app/modules/templates/List'
 import { router, http, makeStore, hooks } from '../../utils'
+import { setGlobal, revertGlobal } from './../../global'
 
 /**
  * Create the component.
@@ -8,13 +9,13 @@ import { router, http, makeStore, hooks } from '../../utils'
  * @return {Wrapper<Vue>}
  */
 const mountComponent = (state = {}) => {
-  global.WpraTemplates = {
+  setGlobal('WpraTemplates', {
     base_url: 'templates',
     options: {
       type: {}
     }
-  }
-  global.WpraGlobal = {}
+  })
+  setGlobal('WpraGlobal', {})
   return mount(List, {
     provide: {
       http,
@@ -37,7 +38,8 @@ const mountComponent = (state = {}) => {
 
 describe('List.js', () => {
   afterEach(() => {
-    sinon.restore();
+    sinon.restore()
+    revertGlobal()
   })
 
   describe('mvp', () => {
