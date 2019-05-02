@@ -82,8 +82,8 @@ describe('List.js', () => {
         ],
       })
 
-      wrapper.find('[value="14"]').trigger('click')
-      wrapper.find('[value="15"]').trigger('click')
+      wrapper.find('[value="14"]').setChecked()
+      wrapper.find('[value="15"]').setChecked()
       wrapper.find('.wpra-bottom-panel a').trigger('click')
 
       mock.verify()

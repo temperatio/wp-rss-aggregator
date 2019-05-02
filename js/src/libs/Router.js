@@ -28,7 +28,7 @@ const getJsonFromUrl = (url) => {
 }
 
 export default class Router {
-  constructor (routes, options) {
+  constructor (routes, options = {}) {
     this.routes = routes
     this.options = options
     this.baseParams = options.baseParams || ['post_type', 'page', 'action', 'id']
