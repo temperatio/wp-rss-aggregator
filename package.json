@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --watch",
     "build": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production ./node_modules/webpack/bin/webpack.js -p",
-    "test": "./node_modules/cross-env/dist/bin/cross-env.js mocha-webpack --webpack-config ./webpack/webpack.vue.test.js --require js/tests/setup.js js/tests/**/*.spec.js",
+    "test": "./node_modules/cross-env/dist/bin/cross-env.js mocha-webpack --webpack-config ./webpack/webpack.vue.test.js --require js/test/setup.js js/test/specs/**/*.spec.js",
     "prepublish": "npm run build"
   },
   "devDependencies": {
