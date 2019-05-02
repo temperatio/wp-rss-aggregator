@@ -60,6 +60,9 @@ export default {
   methods: {
     navigated () {
       Object.keys(this.filter).forEach(key => {
+        if (!this.router.params.hasOwnProperty(key)) {
+          return
+        }
         this.filter[key] = this.router.params[key] || ''
       })
       this.filter.paged = parseInt(this.filter.paged || 1)
@@ -206,8 +209,8 @@ export default {
             }
           </div>,
           <div class="row-actions">
-              <span className="edit">
-                <RouteLink path={editPath(row.id)}>Edit</RouteLink> |
+              <span class="edit">
+                <RouteLink path={editPath(row.id)} data-action="edit">Edit</RouteLink> |
               </span>
             <span class="inline" style={{paddingLeft: '4px'}}>
                 <a href="#"
@@ -215,6 +218,7 @@ export default {
                      e.preventDefault()
                      this.duplicateTemplate(row)
                    }}
+                   data-action="duplicate"
                 >Duplicate</a> {row.type !== '__built_in' ? '|' : ''}
               </span>
             {
@@ -224,7 +228,9 @@ export default {
                   e.preventDefault()
                   this.deleteTemplate(row.id)
                 }}>
-                      <a href="#" class="submitdelete" aria-label="Delete Item">Delete</a>
+                      <a href="#" class="submitdelete" aria-label="Delete Item"
+                         data-action="delete"
+                      >Delete</a>
                     </span>
                 :
                 null
