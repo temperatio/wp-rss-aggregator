@@ -1,10 +1,10 @@
 // router stub.
-function makeRouterStub () {
+export function makeRouterStub (params = {}) {
   let routerStub = {
     routes: [],
     options: {},
     baseParams: [],
-    params: {},
+    params,
     buildRoute: sinon.stub(),
     navigate: sinon.stub(),
   }
@@ -33,6 +33,20 @@ export const http = {
       data: {}
     })
   },
+  post () {
+    return Promise.resolve({
+      data: {}
+    })
+  },
+  put () {
+    return Promise.resolve({
+      data: {}
+    })
+  },
+}
+export const notification = {
+  show () {},
+  error () {},
 }
 export const hooks = {
   apply (arg1, arg2, arg3) {
@@ -40,8 +54,18 @@ export const hooks = {
   }
 }
 export const makeStore = (state = {}) => {
+  let getters = {}
+  const gettersProxy = new Proxy(getters, {
+    get (target, prop) {
+      if (!target.hasOwnProperty(prop)) {
+        target[prop] = sinon.stub()
+      }
+      return target[prop]
+    }
+  })
   return {
     state,
+    getters: gettersProxy,
     commit: sinon.stub(),
     dispatch: sinon.stub(),
     assertCommitted (mutation) {
