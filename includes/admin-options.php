@@ -68,7 +68,7 @@
                 'slug'  => 'advanced_settings',
             );
 
-            if (count(wprss_get_addons()) > 0) {
+            if (count(wprss_get_addons()) > 0 && is_main_site()) {
                 $tabs[] = array(
                     'label' => __( 'Licenses', WPRSS_TEXT_DOMAIN ),
                     'slug'  => 'licenses_settings'
@@ -105,7 +105,17 @@
                 }
                 elseif ( $show_tabs ) {
 
-                    if ( $active_tab === 'licenses_settings' ) {
+                    if ( $active_tab === 'licenses_settings') {
+
+                        if (!is_main_site()) {
+                            printf(
+                                '<p><strong>%s</strong></p>',
+                                __('You do not have access to this page', 'wprss')
+                            );
+
+                            return;
+                        }
+
                         settings_fields( 'wprss_settings_license_keys' );
                         do_settings_sections( 'wprss_settings_license_keys' );
                     }
@@ -156,6 +166,10 @@
                         'label'     => __( 'Limit feed items per import', 'wprss' ),
                         'callback'  => 'wprss_setting_limit_feed_items_per_import_callback'
                     ),
+                    'schedule_future_items' => array(
+                        'label'     => __( 'Schedule future items', 'wprss' ),
+                        'callback'  => 'wprss_setting_schedule_future_items_callback'
+                    ),
                 ),
 
                 'custom_feed' => array(
@@ -181,7 +195,7 @@
 
         $settings['styles']  = array(
             'styles-disable' => array(
-                'label'     =>  __( 'Disable Styles', 'wprss' ),
+                'label'     =>  __( 'Disable styles', 'wprss' ),
                 'callback'  =>  'wprss_setting_styles_disable_callback'
             )
         );
@@ -295,11 +309,6 @@
                     );
                 }
             }
-        }
-
-        // If user requested to download system info, generate the download.
-        if ( isset( $_POST['wprss-sysinfo'] ) ) {
-            do_action('wprss_download_sysinfo');
         }
 
         do_action( 'wprss_admin_init' );
@@ -599,6 +608,22 @@
     }
 
     /**
+     * Renders the `limit_feed_items_per_import` setting.
+     *
+     * @since 4.17
+     *
+     * @param array $field Field data.
+     */
+    function wprss_setting_schedule_future_items_callback($field)
+    {
+        $id = $field['field_id'];
+        $value = wprss_get_general_setting($id);
+
+        echo wprss_options_render_checkbox( $field['field_id'], 'schedule_future_items', $value );
+        echo wprss_settings_inline_help( $field['field_id'], $field['tooltip'] );
+    }
+
+    /**
      * Renders the `feed_items_import_order` setting.
      *
      * @since 4.11.2
@@ -865,7 +890,7 @@
         }
 
         if ( isset($input['unique_titles']) ) {
-            $output['unique_titles'] = (int) $input['unique_titles'];
+            $output['unique_titles'] = $input['unique_titles'];
         }
 
         if ( isset($input['cron_interval']) && $input['cron_interval'] != $current_cron_interval ) {

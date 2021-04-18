@@ -476,27 +476,30 @@ class Manager {
 
         // Prepare constants names
         $itemNameConstant = sprintf( 'WPRSS_%s_SL_ITEM_NAME', $addonUid );
-        $storeUrlConstant = sprintf( 'WPRSS_%s_SL_STORE_URL', $addonUid );
 
         // Check for existence of constants
-        if ( !defined($itemNameConstant) || !defined($storeUrlConstant) ) {
+        if ( !defined($itemNameConstant) ) {
             return null;
         }
 
         // Get constant values
         $itemName = constant( $itemNameConstant );
-        $storeUrl = constant( $storeUrlConstant );
         // Correct item name for lifetime variants
         $itemName = ($isLifetime)
             ? sprintf(static::LIFETIME_ITEM_NAME_PATTERN, $itemName)
             : $itemName;
 
+        $requestData = [
+            'edd_action' => $action,
+            'license'    => $license,
+            'item_name'  => $itemName,
+        ];
+
+        $storeUrl = apply_filters('wpra/licensing/store_url', WPRSS_SL_STORE_URL, $addonId, $action, $license);
+        $requestData = apply_filters('wpra/licensing/request', $requestData, $addonId, $action, $license);
+
         try {
-            $licenseData = $this->api($storeUrl, $requestData = array(
-                'edd_action'            => $action,
-                'license'               => $license,
-                'item_name'             => $itemName,
-            ));
+            $licenseData = $this->api($storeUrl, $requestData);
         }
         catch ( RequestException $e ) {
             wprss_log( sprintf( 'Could not retrieve licensing data from "%1$s": %2$s', $storeUrl, $e->getMessage() ), __FUNCTION__, WPRSS_LOG_LEVEL_WARNING );
@@ -717,7 +720,7 @@ class Manager {
             $_key = sprintf( self::DB_LICENSE_KEYS_OPTION_PATTERN, $_addonId );
             $keys[ $_key ] = $_license->getKey();
         }
-        update_option( self::DB_LICENSE_KEYS_OPTION_NAME, $keys );
+        static::_updateOption( self::DB_LICENSE_KEYS_OPTION_NAME, $keys );
 
         return $this;
     }
@@ -734,7 +737,7 @@ class Manager {
             $statuses[ $_status ] = $_license->getStatus();
             $statuses[ $_expires ] = $_license->getExpiry();
         }
-        update_option( self::DB_LICENSE_STATUSES_OPTION_NAME, $statuses );
+        static::_updateOption( self::DB_LICENSE_STATUSES_OPTION_NAME, $statuses );
 
         return $this;
     }
@@ -746,7 +749,7 @@ class Manager {
      * @return array
      */
     public function getLicenseKeysDbOption() {
-        return get_option( $this->getLicenseKeysOptionName(), array() );
+        return self::_getOption( $this->getLicenseKeysOptionName(), array() );
     }
 
 
@@ -756,7 +759,7 @@ class Manager {
      * @return array
      */
     public function getLicenseStatusesDbOption() {
-        return get_option( $this->getLicenseStatusesOptionName(), array() );
+        return self::_getOption( $this->getLicenseStatusesOptionName(), array() );
     }
 
 
@@ -801,6 +804,65 @@ class Manager {
         }
 
         return $this->_licenseStatusesOptionName;
+    }
+
+    /**
+     * Retrieves the value for an option from the database.
+     *
+     * @since 4.17.5
+     *
+     * @param string $name The name of the option to retrieve.
+     * @param mixed $default Optional default value if the option does not exist.
+     *
+     * @return mixed The value for hte option, or the given $default if the option does not exist.
+     */
+    protected static function _getOption($name, $default = null) {
+        return static::_performOnMainSite(function () use ($name, $default) {
+            return get_option($name, $default);
+        });
+    }
+
+    /**
+     * Updates an option in the database.
+     *
+     * @since 4.17.5
+     *
+     * @param string $name The name of the option.
+     * @param mixed $value The value to set to the option.
+     *
+     * @return mixed True on success, false on failure.
+     */
+    protected static function _updateOption($name, $value) {
+        return static::_performOnMainSite(function () use ($name, $value) {
+            return update_option($name, $value);
+        });
+    }
+
+    /**
+     * Runs a function on the main site of a WordPress multi site installation.
+     *
+     * If the current installation is not a multi-site, the function will run normally.
+     *
+     * @since 4.17.5
+     *
+     * @param callable $function The function to run on the main site.
+     *
+     * @return mixed The return value of the function.
+     */
+    protected static function _performOnMainSite(callable $function) {
+        $mustSwitch = !is_main_site();
+
+        if ($mustSwitch) {
+            switch_to_blog(get_main_site_id());
+        }
+
+        $value = $function();
+
+        if ($mustSwitch) {
+            restore_current_blog();
+        }
+
+        return $value;
     }
 
 

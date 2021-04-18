@@ -73,8 +73,12 @@ function wpra_safe_remote_get($url, $args)
  */
 function wpra_get_plugin_state($basename)
 {
+    if (!function_exists('is_plugin_active') && file_exists(ABSPATH . 'wp-admin/includes/plugin.php')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+
     // ACTIVE
-    if (is_plugin_active($basename)) {
+    if (function_exists('is_plugin_active') && is_plugin_active($basename)) {
         return 2;
     }
 
@@ -102,6 +106,34 @@ function wpra_get_activate_plugin_url($basename)
         sprintf('plugins.php?action=activate&amp;plugin=%s', $basename),
         sprintf('activate-plugin_%s', $basename)
     );
+}
+
+/**
+ * Retrieves the callbacks that are attached to a hook.
+ *
+ * @since 4.18
+ *
+ * @param string $hook The hook name.
+ *
+ * @return callable[] A list of callbacks.
+ */
+function wpra_get_hook_callbacks($hook)
+{
+    global $wp_filter;
+
+    $results = [];
+
+    if (isset($wp_filter[$hook])) {
+        $hook = $wp_filter[$hook];
+
+        foreach ($hook->callbacks as $list) {
+            foreach ($list as $callback) {
+                $results[] = $callback;
+            }
+        }
+    }
+
+    return $results;
 }
 
 /**
@@ -283,4 +315,80 @@ if (!function_exists('array_pick')) {
         $keys = (array)$keys;
         return array_intersect_key($array, array_flip($keys));
     }
+}
+
+/**
+ * Retrieve cron jobs ready to be run.
+ *
+ * @since 4.17
+ *
+ * @return array Cron jobs ready to be run.
+ */
+function wpra_get_ready_cron_jobs() {
+    if (function_exists('wp_get_ready_cron_jobs')) {
+        return wp_get_ready_cron_jobs();
+    }
+
+    $pre = apply_filters('pre_get_ready_cron_jobs', null);
+    if ($pre !== null) {
+        return $pre;
+    }
+
+    $crons = _get_cron_array();
+
+    if ($crons === false) {
+        return [];
+    }
+
+    $keys = array_keys($crons);
+    $gmt_time = microtime(true);
+
+    if (isset($keys[0]) && $keys[0] > $gmt_time) {
+        return [];
+    }
+
+    $results = [];
+    foreach ($crons as $timestamp => $cronhooks) {
+        if ($timestamp > $gmt_time) {
+            break;
+        }
+
+        $results[$timestamp] = $cronhooks;
+    }
+
+    return $results;
+}
+
+/**
+ * Retrieves the translation for some text from the "wprss" domain.
+ *
+ * @since 4.17.3
+ *
+ * @param string $text The text whose translation to retrieve.
+ *
+ * @return string
+ */
+function wprss_translate($text)
+{
+    $translations = get_translations_for_domain('wprss');
+
+    return $translations->translate($text);
+}
+
+/**
+ * Retrieves the singular or plural translation for some text from the "wprss" domain.
+ *
+ * @since 4.17.3
+ *
+ * @param string $single The singular text.
+ * @param string $plural The plural text.
+ * @param int    $number The amount, used to determine whether the singular or plural translation will be retrieved.
+ *
+ * @return string
+ */
+function wprss_translate_n($single, $plural, $number)
+{
+    $translations = get_translations_for_domain('wprss');
+
+    return $translations->translate_plural($single, $plural, $number);
 }

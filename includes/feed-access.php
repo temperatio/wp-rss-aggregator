@@ -10,6 +10,7 @@ class WPRSS_Feed_Access
 {
 
     const RESOURCE_CLASS = 'WPRSS_SimplePie_File';
+    const ITEM_CLASS = 'WPRSS_SimplePie_Item';
     const D_REDIRECTS = 5;
 
     const SETTING_KEY_CERTIFICATE_PATH = 'certificate-path';
@@ -171,6 +172,7 @@ class WPRSS_Feed_Access
 	 */
 	public function set_feed_options($feed, $feedSourceId = null)
         {
+            $feed->set_item_class(static::ITEM_CLASS);
             $feed->set_file_class( static::RESOURCE_CLASS );
             $feed->set_useragent($this->get_useragent($feedSourceId));
             WPRSS_SimplePie_File::set_default_certificate_file_path($this->get_certificate_file_path());
@@ -228,7 +230,7 @@ class WPRSS_Feed_Access
 
             $fields[self::SETTING_KEY_FEED_REQUEST_USERAGENT] = array(
                 'id'            => self::SETTING_KEY_FEED_REQUEST_USERAGENT,
-                'label'         => $wprss->__('Feed Request Useragent'),
+                'label'         => $wprss->__('Feed request useragent'),
                 'placeholder'   => $wprss->__('Leave blank to inherit general setting')
             );
 
@@ -367,6 +369,18 @@ add_action('wprss_init', function() {
     WPRSS_Feed_Access::instance();
 });
 
+class WPRSS_SimplePie_Item extends SimplePie_Item {
+
+    public function sanitize($data, $type, $base = '')
+    {
+        if ($type & (SIMPLEPIE_CONSTRUCT_HTML | SIMPLEPIE_CONSTRUCT_XHTML | SIMPLEPIE_CONSTRUCT_MAYBE_HTML)) {
+            return $data;
+        }
+
+        return parent::sanitize($data, $type, $base);
+    }
+}
+
 
 /**
  * A padding layer used to give WPRSS more control over fetching of feed resources.
@@ -416,13 +430,17 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 				curl_setopt( $fp, CURLOPT_RETURNTRANSFER, 1 );
 				curl_setopt( $fp, CURLOPT_TIMEOUT, $timeout );
 				curl_setopt( $fp, CURLOPT_CONNECTTIMEOUT, $timeout );
-				curl_setopt( $fp, CURLOPT_REFERER, $url );
 				curl_setopt( $fp, CURLOPT_USERAGENT, $useragent );
 				curl_setopt( $fp, CURLOPT_HTTPHEADER, $headers2 );
 				if ( !ini_get( 'open_basedir' ) && !ini_get( 'safe_mode' ) && version_compare( SimplePie_Misc::get_curl_version(), '7.15.2', '>=' ) ) {
 					curl_setopt( $fp, CURLOPT_FOLLOWLOCATION, 1 );
 					curl_setopt( $fp, CURLOPT_MAXREDIRS, $redirects );
 				}
+
+				global $wpraNoSslVerification;
+				if ($wpraNoSslVerification) {
+				    curl_setopt( $fp, CURLOPT_SSL_VERIFYPEER, 0 );
+                }
 
 				$this->_before_curl_exec( $fp, $url );
 
@@ -442,7 +460,7 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 					$parser = new SimplePie_HTTP_Parser( $this->headers );
 					if ( $parser->parse() ) {
 						$this->headers = $parser->headers;
-						$this->body = $parser->body;
+						$this->body = $this->_processBody($parser->body);
 						$this->status_code = $parser->status_code;
 						if ( (in_array( $this->status_code, array( 300, 301, 302, 303, 307 ) ) || $this->status_code > 307 && $this->status_code < 400) && isset( $this->headers['location'] ) && $this->redirects < $redirects ) {
 							$this->redirects++;
@@ -506,7 +524,7 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 						$parser = new SimplePie_HTTP_Parser( $this->headers );
 						if ( $parser->parse() ) {
 							$this->headers = $parser->headers;
-							$this->body = $parser->body;
+							$this->body = $this->_processBody($parser->body);
 							$this->status_code = $parser->status_code;
 							if ( (in_array( $this->status_code, array( 300, 301, 302, 303, 307 ) ) || $this->status_code > 307 && $this->status_code < 400) && isset( $this->headers['location'] ) && $this->redirects < $redirects ) {
 								$this->redirects++;
@@ -523,7 +541,7 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 											$this->error = 'Unable to decode HTTP "gzip" stream';
 											$this->success = false;
 										} else {
-											$this->body = $decoder->data;
+											$this->body = $this->_processBody($decoder->data);
 										}
 										break;
 
@@ -538,6 +556,7 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 											$this->error = 'Unable to decode HTTP "deflate" stream';
 											$this->success = false;
 										}
+										$this->body = $this->_processBody($this->body);
 										break;
 
 									default:
@@ -555,13 +574,26 @@ class WPRSS_SimplePie_File extends SimplePie_File {
 			}
 		} else {
 			$this->method = SIMPLEPIE_FILE_SOURCE_LOCAL | SIMPLEPIE_FILE_SOURCE_FILE_GET_CONTENTS;
-			if ( !$this->body = file_get_contents( $url ) ) {
+            $this->body = $this->_processBody(file_get_contents($url));
+			if ( !$this->body ) {
 				$this->error = 'file_get_contents could not read the file';
 				$this->success = false;
 			}
 		}
 	}
 
+    /**
+     * Processes the raw response body for an RSS feed.
+     *
+     * @since 4.17
+     *
+     * @param string $body The raw HTTP response body string.
+     *
+     * @return string The processed response body string.
+     */
+	protected function _processBody($body) {
+	    return trim($body);
+    }
 
 	/**
 	 * Additional preparation of the curl request.

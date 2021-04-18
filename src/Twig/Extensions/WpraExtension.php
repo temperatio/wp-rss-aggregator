@@ -45,6 +45,7 @@ class WpraExtension extends AbstractExtension
             $this->getWpraTooltipFunction(),
             $this->getHtmlEntitiesDecodeFunction(),
             $this->getWpraItemUrlFunction(),
+            $this->getWpraIsAudioFunction(),
         ];
     }
 
@@ -129,7 +130,7 @@ class WpraExtension extends AbstractExtension
      *
      * @since 4.13
      *
-     * @return TwigFilter The filter instance.
+     * @return TwigFilter The function instance.
      */
     protected function getWpraLinkFilter()
     {
@@ -153,15 +154,30 @@ class WpraExtension extends AbstractExtension
      *
      * @since 4.14
      *
-     * @return TwigFunction The filter instance.
+     * @return TwigFunction The function instance.
      */
     protected function getWpraLinkAttrsFunction()
     {
         $name = 'wpra_link_attrs';
+        $options = [
+            'is_safe' => ['html'],
+        ];
 
         return new TwigFunction($name, function ($url, $options, $className = '') {
-            return $this->prepareLinkAttrs($url, $options, $className);
-        });
+            return ' ' . $this->prepareLinkAttrs($url, $options, $className);
+        }, $options);
+    }
+
+    /**
+     * Retrieves the "wpra_is_audio_url" Twig function.
+     *
+     * @since 4.18
+     *
+     * @return TwigFunction The function instance.
+     */
+    protected function getWpraIsAudioFunction()
+    {
+        return new TwigFunction('wpra_is_audio_url', 'wpra_is_audio_file');
     }
 
     /**
@@ -169,7 +185,7 @@ class WpraExtension extends AbstractExtension
      *
      * @since 4.14
      *
-     * @return TwigFilter The filter instance.
+     * @return TwigFilter The function instance.
      */
     protected function getWordsLimitFilter()
     {
@@ -191,7 +207,7 @@ class WpraExtension extends AbstractExtension
      *
      * @since 4.14
      *
-     * @return TwigFunction The filter instance.
+     * @return TwigFunction The function instance.
      */
     protected function getHtmlEntitiesDecodeFunction()
     {

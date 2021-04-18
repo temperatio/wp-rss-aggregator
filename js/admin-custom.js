@@ -160,8 +160,7 @@ function toggle_feed_state_ajax_callback(e) {
 
 
 
-jQuery(window).load( function(){
-
+jQuery(window).on('load', function() {
 
     function wprssParseDate(str){
         var t = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -285,7 +284,7 @@ jQuery(window).load( function(){
  * WP-like collapsing settings in metabox 
  */
 (function($, wprss_admin_custom){
-    $(window).load( function(){
+    $(window).on('load', function() {
 
 		// Adds the Bulk Add button
 		$('<a>').text( wprss_admin_custom.bulk_add ).attr('href', wprss_urls.import_export).addClass('add-new-h2').insertAfter( $('.add-new-h2') );
@@ -443,7 +442,7 @@ if ( !String.prototype.trim ) {
 
 // For add-ons page
 (function($) {
-    $(window).load(function(){                
+    $(window).on('load', function() {
         $('#add-ons .add-on-group').each(function(){                
             var $el = $(this),
                 h = 0;                                        
@@ -492,7 +491,7 @@ if ( !String.prototype.trim ) {
             linkEl.text(linkEl.text() + ' (' + count + ')')
 
             // If there are no logs for this filter, disable it
-            if (count == 0) {
+            if (count === 0) {
                 filterEl.addClass('wpra-log-filter-disabled');
                 return;
             }
@@ -604,17 +603,23 @@ if ( !String.prototype.trim ) {
 // Image options in feed source edit page
 (function($) {
     function update() {
+        var f2pTypeSelector = $('select#wprss_ftp_post_type');
+        var showMetaBox = (f2pTypeSelector.length === 0) || (f2pTypeSelector.val() === 'wprss_feed_item');
+
         var ftImage = $('#wpra_ft_image').val();
         var downloadImages = $('#wpra_download_images').prop('checked') === true;
         var ftImagesEnabled = (ftImage !== '');
-        var useDefaultftImage = (ftImage === 'default');
+        var useDefaultFtImage = (ftImage === 'default');
+
+        // Only show the meta box when F2P is not active, or it is and the Post Type is "Feed Item"
+        $('#wpra-images').toggle(showMetaBox);
 
         // Only show the "must have ft image" and "remove ft image" options if featured images are enabled
         $('#wpra_siphon_ft_image').toggle(ftImagesEnabled);
         $('#wpra_must_have_ft_image').toggle(ftImagesEnabled);
 
         // Show the image minimum size options if either featured images or image downloading are enabled
-        $('#wpra_image_min_size_row').toggle( (ftImagesEnabled || downloadImages) && !useDefaultftImage );
+        $('#wpra_image_min_size_row').toggle( (ftImagesEnabled || downloadImages) && !useDefaultFtImage );
     }
 
     $(document).ready(function () {
@@ -623,6 +628,12 @@ if ( !String.prototype.trim ) {
         if (defFtImage.length) {
             $('#wpra_ft_image').on('change', update);
             $('#wpra_download_images').on('change', update);
+
+            // If the F2P Post Type selector is on the page, update the image options when the post type selection changes
+            var f2pTypeSelector = $('select#wprss_ftp_post_type');
+            if (f2pTypeSelector.length) {
+                f2pTypeSelector.on('change', update);
+            }
 
             update();
 

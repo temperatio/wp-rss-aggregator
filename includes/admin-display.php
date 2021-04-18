@@ -424,30 +424,8 @@
      * @since 3.5
      * @param int $source_id The ID of the feed source
      */
-    function wprss_delete_feed_items_of_feed_source( $source_id ) {
-        $force_delete = apply_filters( 'wprss_force_delete_when_by_source', TRUE );
-        // WPML fix: removes the current language from the query WHERE and JOIN clauses
-        global $sitepress;
-        if ( $sitepress !== NULL ) {
-            remove_filter( 'posts_join', array( $sitepress,'posts_join_filter') );
-            remove_filter( 'posts_where', array( $sitepress,'posts_where_filter') );
-        }
-        // Run the query
-        $query = new WP_Query(
-            array(
-                    'meta_key'       => 'wprss_feed_id',
-                    'meta_value'     => $source_id,
-                    'post_type'      => get_post_types(),
-                    'post_status'    => 'any',
-                    'posts_per_page' => -1
-                )
-        );
-        $query = apply_filters( 'wprss_delete_per_source_query', $query, $source_id );
-        // Delete the results of the query
-        while( $query->have_posts() ) {
-            $query->the_post();
-            wp_delete_post( get_the_ID(), $force_delete );
-        }
+    function wprss_delete_feed_items_of_feed_source($source_id) {
+        wprss_delete_feed_items($source_id);
 
         update_post_meta($source_id, 'wprss_feed_is_deleting_items', '');
     }
@@ -513,7 +491,7 @@
             }
 
             // Schedule the event for 5 seconds from now
-            $offset = floor(count(wp_get_ready_cron_jobs()) / 2);
+            $offset = floor(count(wpra_get_ready_cron_jobs()) / 2);
             $success = wp_schedule_single_event( time() + $offset, 'wprss_fetch_single_feed_hook', $schedule_args );
             if (!$success) {
                 throw new Exception(__('Failed to schedule cron', 'wprss'));
@@ -562,7 +540,7 @@
             }
 
             // Schedule a job that runs this function with the source id parameter
-            $offset = floor(count(wp_get_ready_cron_jobs()) / 2);
+            $offset = floor(count(wpra_get_ready_cron_jobs()) / 2);
             $success = wp_schedule_single_event( time() + $offset, 'wprss_delete_feed_items_from_source_hook', array( $id ) );
             if (!$success) {
                 throw new Exception(__('Failed to schedule cron', 'wprss'));
@@ -684,22 +662,6 @@
         </script>
         <?php
     }
-
-
-    add_filter( 'gettext', 'wprss_change_publish_button_text', 10, 2 );
-    /**
-     * Modify 'Publish' button text when adding a new feed source
-     *
-     * @since 2.0
-     */
-    function wprss_change_publish_button_text( $translation, $text ) {
-        if ( 'wprss_feed' == get_post_type()) {
-            if ( $text == 'Publish' )
-                return __( 'Publish Feed', WPRSS_TEXT_DOMAIN );
-        }
-        return apply_filters( 'wprss_change_publish_button_text', $translation );
-    }
-
 
 
     add_action( 'wp_before_admin_bar_render', 'wprss_modify_admin_bar' );

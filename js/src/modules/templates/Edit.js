@@ -258,7 +258,7 @@ export default {
                         <span class="dashicons dashicons-info"/>
                       </div>
                       <div class="wpra-info-box__text">
-                        This is the default template for WP RSS Aggregator. It is used as the fallback template when one is not selected via the shortcode or block. To create a new one, please go back to the Templates List.
+                        This is the default template for WP RSS Aggregator. It is used as the fallback template when one is not selected via the shortcode or block. To create a new one, please go back to the templates list page.
                       </div>
                     </div>
                     :
@@ -397,6 +397,18 @@ export default {
                          title={this.tooltips.options.bullet_type}
                   />
                 </div>
+
+                {WpraTemplates.audio_features_enabled &&
+                  <div id={'wpra-list-template-media'} style={{paddingTop: '10px'}}>
+                    <Input type="checkbox"
+                           label={'Show audio player'}
+                           value={this.model.options.audio_player_enabled}
+                           onInput={(e) => this.model.options.audio_player_enabled = e}
+                           style={{fontWeight: 'bold'}}
+                           title={this.tooltips.options.audio_player_enabled}
+                    />
+                  </div>
+                }
               </Postbox>
             </Main>
             <Sidebar>

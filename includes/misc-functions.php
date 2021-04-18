@@ -395,3 +395,63 @@ if (!function_exists('wprss_verify_nonce'))
                 : false;
     }
 }
+
+/**
+ * Formats a hook callback into a readable string.
+ *
+ * @param array $callback A callback entry.
+ *
+ * @return string The callback name.
+ */
+function wprss_format_hook_callback(array $callback)
+{
+    // Break static strings: "Example::method"
+    // into arrays: ["Example", "method"]
+    if (is_string($callback['function']) && (strpos($callback['function'], '::') !== false)) {
+        $callback['function'] = explode('::', $callback['function']);
+    }
+
+    if (is_array($callback['function'])) {
+        if (is_object($callback['function'][0])) {
+            $class = get_class($callback['function'][0]);
+            $access = '->';
+        } else {
+            $class = $callback['function'][0];
+            $access = '::';
+        }
+
+        $callback['name'] = $class . $access . $callback['function'][1] . '()';
+    } elseif (is_object($callback['function'])) {
+        if (is_a($callback['function'], 'Closure')) {
+            $callback['name'] = 'Closure';
+        } else {
+            $class = get_class($callback['function']);
+
+            $callback['name'] = $class . '->__invoke()';
+        }
+    } else {
+        $callback['name'] = $callback['function'] . '()';
+    }
+
+    return $callback['name'];
+}
+
+/**
+ * Retrieves the file extension from a URI.
+ *
+ * @since 4.18
+ *
+ * @param string $uri The URI
+ *
+ * @return string|null The file extension or null if it could not be determined.
+ */
+function wpra_get_uri_extension($uri)
+{
+    $path = parse_url($uri, PHP_URL_PATH);
+
+    if (!$path || empty($path)) {
+        return null;
+    }
+
+    return strtolower(pathinfo($path, PATHINFO_EXTENSION));
+}

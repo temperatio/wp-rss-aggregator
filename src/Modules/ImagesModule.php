@@ -223,12 +223,17 @@ class ImagesModule implements ModuleInterface
                     global $post;
 
                     $collection = $c->get('wpra/feeds/sources/collection');
-                    $feed = isset($collection[$post->ID])
-                        ? $collection[$post->ID]
+                    $info = isset($collection[$post->ID])
+                        ? $collection[$post->ID]->export()
                         : [];
 
+                    // Get the URL for the default ft. image and add it to the info
+                    if (array_key_exists('def_ft_image', $info)) {
+                        $info['def_ft_image_url'] = wp_get_attachment_url($info['def_ft_image']);
+                    }
+
                     return [
-                        'feed' => $feed,
+                        'feed' => $info,
                         'options' => $c->get('wpra/images/feeds/meta_box/template/enabled_options'),
                     ];
                 };
@@ -355,10 +360,8 @@ class ImagesModule implements ModuleInterface
 
         // Check if the images UI is enabled
         if ($c->get('wpra/images/ui_enabled')) {
-            // The handler that registers the images meta box, if Feed to Post's version is not being used
-            if (!class_exists('WPRSS_FTP_Meta')) {
-                add_action('add_meta_boxes', $c->get('wpra/images/feeds/meta_box/handler/register'));
-            }
+            // The handler that registers the images meta box
+            add_action('add_meta_boxes', $c->get('wpra/images/feeds/meta_box/handler/register'));
 
             // Show the developer images meta box for feed items, if the developer filter is enabled
             if (wpra_is_dev_mode()) {

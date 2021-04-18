@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --watch",
-    "build": "./node_modules/cross-env/dist/bin/cross-env.js NODE_ENV=production ./node_modules/webpack/bin/webpack.js -p",
-    "prepublish": "npm run build"
+    "dev": "cross-env NODE_ENV=dev webpack --watch",
+    "build": "cross-env NODE_ENV=production webpack -p"
   },
   "devDependencies": {
     "@rebelcode/ui-framework": "^0.2.2",
@@ -36,7 +35,7 @@
     "fast-deep-equal": "^2.0.1",
     "fast-sass-loader": "^1.4.6",
     "imports-loader": "^0.8.0",
-    "node-sass": "^4.7.2",
+    "node-sass": "^4.13.0",
     "sass-loader": "^7.0.1",
     "style-loader": "^0.23.0",
     "vue": "^2.5.17",

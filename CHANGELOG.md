@@ -4,6 +4,186 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [4.18.1] - 2021-03-15
+### Added
+* New filters to change the time limits during image downloads.
+
+### Changed
+* Using a single store URL for addon license verification.
+* Increased the PHP execution time limits for image downloads.
+
+### Fixed
+* Licenses for the Templates addon could not be verified.
+
+## [4.18] - 2021-03-08
+### Added
+* The total import time is now recorded in the debug log.
+
+### Changed
+* Omitting dev files from the plugin, reducing its size.
+* Redesigned the "More Features" page.
+* Feed items link to the original article when shown without a template and in RSS feeds.
+* Allocating more PHP execution time for image downloads.
+
+### Fixed
+* Images with HTML entities in the URL resulted in broken images and missing featured images.
+* The code that checks when a feed is saved no longer runs unnecessarily.
+* Fixed styling issues with the "Save" button in the Templates edit page.
+* The max title length option in the "Default" template was being applied in the "Feed Items" page.
+
+## [4.17.10] - 2020-12-01
+### Fixed
+* After updating the Templates add-on from v0.2, the add-on would be deactivated.
+
+## [4.17.9] - 2020-11-25
+### Changed
+* Auto image detection is now able to find the feed channel image.
+* SimplePie auto-discovery is turned off when the "Force feed" option is enabled.
+* The Feed Source post type is no longer public.
+* Meta box styling has been updated to match WordPress 5.3's updated styles.
+
+### Fixed
+* Removed referer header from feed requests, fixed importing for some feeds.
+* Feeds that contain items without titles no longer only import just the first item.
+* Cron jobs are properly added/removed when the plugin is activated/deactivated, respectively.
+* Problems with the default template no longer trigger a fatal error.
+
+## [4.17.8] - 2020-10-06
+### Changed
+* Disabled SimplePie's HTML sanitization.
+* Updated jQuery code to be compatible with the upcoming update in WordPress.
+* Images without an extension can now be imported.
+* The image importing function now allows the image URL and local path to be changed via filters.
+* Changed how item importing is logged in the debugging log. The log now shows what hooks can reject an item.
+
+### Fixed
+* WooCommerce Product type dropdown and accompanying options disappear while WP RSS Aggregator is active.
+* Addressed notices about `register_rest_route` being called incorrectly.
+* The "Validate feed" link did not work.
+* Sites on a multi-site network would see an error about a function not existing.
+* Errors would not be properly rendered for non-fatal notices and warnings.
+
+## [4.17.7] - 2020-08-12
+### Added
+* New HTML classes for pagination buttons.
+
+### Fixed
+* The featured image when using the Feed to Post add-on was not being saved.
+
+### Changed
+* FeedBurner feeds no longer need to have "format=xml" at the end of the URL.
+
+## [4.17.6] - 2020-07-29
+### Added
+* A link in the New/Edit Feed Source page on how to find an RSS feed.
+
+### Changed
+* The "Force feed" option turns off SSL verification.
+* Improved wording on the Help page.
+* Dates in templates can now be translated.
+* The link to the article on how to find an RSS feed now links to an article from the plugin's knowledge base.
+* The "Unique Titles" feed option can now be set to default to the global setting.
+
+### Fixed
+* Rewrite rules would always get flushed when plugins tamper with them, such as Polylang Pro.
+* The "Delete All Imported Items" reset option was deleting all posts on the site.
+* Image options would not show up when using Feed to Post to import Feed Items.
+
+### Removed
+* A `gettext` filter that changes the text for saving feeds, for performance reasons.
+
+## [4.17.5] - 2020-04-22
+### Changed
+* Now showing a case study of a site using the Pro Plan in the on-boarding wizard.
+* Licenses are now managed by the main site. Child sites do not have access to the licenses page.
+
+### Fixed
+* The custom feed did not include items imported as posts or other post types.
+
+### Removed
+* Temporarily disabled the "What's New" page.
+* Removed the integration with Lorem on the "Help & Support" page.
+* Removed the integration with Lorem on the "More Features" page.
+
+## [4.17.4] - 2020-03-16
+### Changed
+* The default template is now created based on type, not slug.
+
+### Fixed
+* Templates could not be saved if the request contained extra form data.
+* The default template would be copied multiple times if a post on the site had the "default" slug.
+* Feed item title did not escape HTML entities correctly.
+* Source name and link were sometimes incorrect in the custom feed.
+* Undefined index during error handling.
+* Better error messages when an error occurs.
+
+## [4.17.3] - 2020-01-23
+### Changed
+* Updated code to fix deprecation warnings on PHP version 7.4 and later.
+* Updated the Twig library to version `1.41.0` to fix deprecation warnings on PHP version 7.4 and later.
+* Updated the default translation files to contain up-to-date text.
+
+### Fixed
+* Removed a false-positive error from the log.
+* Localization in Twig templates did not work.
+* When revisions are enabled, an error would prevent feed sources from being saved.
+* Translations were being loaded from an invalid path.
+* The default featured image in the New/Edit Feed Source page did not preview after saving the feed source.
+* Missing space between the link `a` tag and the `href` attribute on PHP 7.4
+
+### Removed
+* Removed warning when trying to blacklist a non-imported post.
+
+## [4.17.2] - 2019-12-19
+### Added
+* The error handler now includes the file and line where the error occurred.
+
+### Changed
+* The obsolete "Link Source" option is now only shown when the Excerpts & Thumbnails add-on is active.
+
+### Fixed
+* The new "feeds" shortcode parameter only showed feed items for the first 10 feed sources.
+
+## [4.17.1] - 2019-12-12
+### Fixed
+* The new slug option was appearing on the edit pages for posts of all types.
+
+## [4.17] - 2019-12-11
+### Added
+* New "Tools" that replaces the "Blacklist", "Import/Export" and "Debugging" pages.
+* New option to control whether items with future dates are scheduled or published with truncated dates.
+* New "feeds" shortcode parameter to select feed sources by their slug names.
+* New "1 week" update interval option to update feeds once every week.
+* The "Edit Feed Source" page now allows the slug to be edited.
+* The "Edit Feed Source" page now shows shortcode snippets.
+
+### Changed
+* RSS feeds that are invalid due to leading whitespace are now trimmed and may now be imported.
+* Images that have the same URL are now downloaded to the media library only once.
+* Updated some styles to match the new WordPress 5.3 aesthetic.
+* Optimized template saving to be more performant and less error prone.
+* Improved error messages in REST API responses.
+* Removed some log messages.
+* Fatal errors are now always logged.
+* Optimized cron-related functionality.
+* The plugin will no longer register cron schedules that already exist.
+* License-related notices are now only shown to users who have access to the Licenses settings page.
+
+### Fixed
+* The "Import Source" option did not work.
+* Templates now link imported posts to the local post instead of to the original article.
+* Images with HTML entities in the URL could not be downloaded.
+* Feed items without a PolyLang translation did not show up in templates.
+* PHP notices were triggered when trying to download invalid images.
+* The feed item count in the "Feed Sources" page would show zero when certain add-ons are installed.
+* Removed a warning shown in templates about `reset()` expecting an array.
+* Thumbnails imported by Excerpts & Thumbnails were not shown in templates.
+* Some databases would report the following error during logging: "Column 'date' cannot be null".
+* Unserializing the options for the system info triggered PHP notices.
+
+### Removed
+* A WordPress 5.1 function was being used to check for ready cron jobs, now replaced with a custom function.
+
 ## [4.16] - 2019-10-31
 ### Changed
 * Overhauled the data set system with a more robust entity system.

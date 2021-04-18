@@ -4,7 +4,7 @@
  * Plugin Name: WP RSS Aggregator
  * Plugin URI: https://www.wprssaggregator.com/#utm_source=wpadmin&utm_medium=plugin&utm_campaign=wpraplugin
  * Description: Imports and aggregates multiple RSS Feeds.
- * Version: 4.16
+ * Version: 4.18.1
  * Author: RebelCode
  * Author URI: https://www.wprssaggregator.com
  * Text Domain: wprss
@@ -39,6 +39,8 @@ use RebelCode\Wpra\Core\Container\WpFilterContainer;
 use RebelCode\Wpra\Core\ErrorHandler;
 use RebelCode\Wpra\Core\Modules\AddonsModule;
 use RebelCode\Wpra\Core\Modules\AssetsModule;
+use RebelCode\Wpra\Core\Modules\BlacklistToolModule;
+use RebelCode\Wpra\Core\Modules\BulkAddToolModule;
 use RebelCode\Wpra\Core\Modules\CoreModule;
 use RebelCode\Wpra\Core\Modules\CustomFeedModule;
 use RebelCode\Wpra\Core\Modules\FeedBlacklistModule;
@@ -51,14 +53,18 @@ use RebelCode\Wpra\Core\Modules\GutenbergBlockModule;
 use RebelCode\Wpra\Core\Modules\I18nModule;
 use RebelCode\Wpra\Core\Modules\ImagesModule;
 use RebelCode\Wpra\Core\Modules\ImporterModule;
+use RebelCode\Wpra\Core\Modules\ImportExportToolsModule;
 use RebelCode\Wpra\Core\Modules\LicensingModule;
 use RebelCode\Wpra\Core\Modules\LoggerModule;
-use RebelCode\Wpra\Core\Modules\LoremModule;
+use RebelCode\Wpra\Core\Modules\LogsToolModule;
 use RebelCode\Wpra\Core\Modules\ModuleInterface;
 use RebelCode\Wpra\Core\Modules\ParsedownModule;
 use RebelCode\Wpra\Core\Modules\PolyLangCompatModule;
+use RebelCode\Wpra\Core\Modules\ResetToolModule;
 use RebelCode\Wpra\Core\Modules\RestApiModule;
 use RebelCode\Wpra\Core\Modules\SettingsModule;
+use RebelCode\Wpra\Core\Modules\SysInfoToolModule;
+use RebelCode\Wpra\Core\Modules\ToolsModule;
 use RebelCode\Wpra\Core\Modules\TwigModule;
 use RebelCode\Wpra\Core\Modules\UpsellModule;
 use RebelCode\Wpra\Core\Modules\WpModule;
@@ -70,7 +76,7 @@ use RebelCode\Wpra\Core\Plugin;
 
 // Set the version number of the plugin.
 if( !defined( 'WPRSS_VERSION' ) )
-    define( 'WPRSS_VERSION', '4.16' );
+    define( 'WPRSS_VERSION', '4.18.1' );
 
 if( !defined( 'WPRSS_WP_MIN_VERSION' ) )
     define( 'WPRSS_WP_MIN_VERSION', '4.8' );
@@ -133,7 +139,7 @@ if( !defined( 'WPRSS_LOG_FILE_EXT' ) )
     define( 'WPRSS_LOG_FILE_EXT', '.txt' );
 
 if ( !defined('WPRSS_SL_STORE_URL') ) {
-    define( 'WPRSS_SL_STORE_URL', 'https://www.wprssaggregator.com' );
+    define( 'WPRSS_SL_STORE_URL', 'https://www.wprssaggregator.com/edd-sl-api/' );
 }
 
 if ( !defined( 'WPRSS_TEXT_DOMAIN' ) ) {
@@ -219,6 +225,9 @@ require_once ( WPRSS_INC . 'feed-importing.php' );
 /* Load the feed image importing functions file */
 require_once ( WPRSS_INC . 'feed-importing-images.php' );
 
+/* Load the site-specific importing functions file */
+require_once ( WPRSS_INC . 'feed-importing-sites.php' );
+
 /* Load the feed states functions file */
 require_once ( WPRSS_INC . 'feed-states.php' );
 
@@ -240,10 +249,7 @@ require_once ( WPRSS_INC . 'admin-options.php' );
 /* Load the legacy admin options functions file. */
 require_once ( WPRSS_INC . 'admin-options-legacy.php' );
 
-/* Load the settings import/export file */
-require_once ( WPRSS_INC . 'admin-import-export.php' );
-
-/* Load the debugging file */
+/* Load the system info file */
 require_once ( WPRSS_INC . 'system-info.php' );
 
 /* Load the miscellaneous functions file */
@@ -254,9 +260,6 @@ require_once ( WPRSS_INC . 'OPML.php' );
 
 /* Load the OPML Importer file */
 require_once ( WPRSS_INC . 'opml-importer.php' );
-
-/* Load the admin debugging page file */
-require_once ( WPRSS_INC . 'admin-debugging.php' );
 
 /* Load the admin display-related functions */
 require_once ( WPRSS_INC . 'admin-display.php' );
@@ -315,7 +318,11 @@ require_once ( WPRSS_INC . 'polyfills.php' );
 /* Load the youtube functionality */
 require_once ( WPRSS_INC . 'youtube.php' );
 
-do_action('wprss_pre_init');
+/* Load the multi-media file */
+require_once ( WPRSS_INC . 'multimedia.php' );
+
+/* Load the Templates v0.2.1 update path */
+require_once ( WPRSS_INC . 'templates-update.php' );
 
 register_activation_hook(__FILE__, 'wprss_activate');
 register_deactivation_hook(__FILE__, 'wprss_deactivate');
@@ -396,10 +403,17 @@ function wpra_modules()
         'images' => new ImagesModule(),
         'custom_feed' => new CustomFeedModule(),
         'rest_api' => new RestApiModule(),
+        'tools' => new ToolsModule(),
+        'tools/bulk_add' => new BulkAddToolModule(),
+        'tools/blacklist' => new BlackListToolModule(),
+        'tools/import_export' => new ImportExportToolsModule(),
+        // 'tools/crons' => new CronsToolModule(),
+        'tools/logs' => new LogsToolModule(),
+        'tools/sys_info' => new SysInfoToolModule(),
+        'tools/reset' => new ResetToolModule(),
         'settings' => new SettingsModule(),
         'licensing' => new LicensingModule(),
         'upsell' => new UpsellModule(),
-        'lorem' => new LoremModule(),
         'logging' => new LoggerModule(),
         'i18n' => new I18nModule(),
         'twig' => new TwigModule(),
@@ -560,7 +574,15 @@ function wpra_display_error($message, $error)
             <div style="padding-top: 10px; overflow-x: scroll;">
                 <strong><?php _e('Error Message:', 'wprss'); ?></strong>
                 <br/>
-                <pre><?php echo $error->getMessage(); ?></pre>
+                <pre><?= $error->getMessage(); ?> (<?= wprss_error_path($error) ?>)</pre>
+
+                <?php
+                $prev = $error;
+                while ($prev = $prev->getPrevious()) : ?>
+                    <strong><?php _e('Caused by:', 'wprss'); ?></strong>
+                    <br/>
+                    <pre><?= $prev->getMessage(); ?> (<?= wprss_error_path($prev) ?>)</pre>
+                <?php endwhile; ?>
 
                 <strong><?php _e('Stack trace:', 'wprss'); ?></strong>
                 <br/>
@@ -572,6 +594,34 @@ function wpra_display_error($message, $error)
     <?php
 
     return ob_get_clean();
+}
+
+/**
+ * @since 4.17.9
+ *
+ * @param Exception|Error $exception
+ *
+ * @return string
+ */
+function wprss_error_path($exception)
+{
+    $file = $exception->getFile();
+
+    $pos = stripos($file, 'wp-content');
+
+    if ($pos === false) {
+        $pos = stripos($file, 'wp-includes');
+    }
+
+    if ($pos === false) {
+        $pos = stripos($file, 'wp-admin');
+    }
+
+    if ($pos !== false) {
+        $file = substr($file, $pos);
+    }
+
+    return $file . ':' . $exception->getLine();
 }
 
 /**
@@ -647,6 +697,7 @@ function wprss() {
 }
 
 try {
+    do_action('wprss_pre_init');
     $instance = wprss();
 } catch (Throwable $t) {
     wpra_error_handler($t);
@@ -801,18 +852,49 @@ function wprss_activate() {
     // Sets a transient to trigger a redirect upon completion of activation procedure
     set_transient( '_wprss_activation_redirect', true, 30 );
 
-    include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+    include_once(ABSPATH . 'wp-admin/includes/plugin.php');
     // Check if WordPress SEO is activate, if yes set its options for hiding the metaboxes on the wprss_feed and wprss_feed_item screens
-    if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
-        $wpseo_titles = get_option( 'wpseo_titles', array() );
-        if ( isset( $wpseo_titles['hideeditbox-wprss_feed'] ) ) {
-            $wpseo_titles['hideeditbox-wprss_feed'] = TRUE;
-            $wpseo_titles['hideeditbox-wprss_feed_item'] = TRUE;
+    if (is_plugin_active('wordpress-seo/wp-seo.php')) {
+        $wpseo_titles = get_option('wpseo_titles', []);
+        if (isset($wpseo_titles['hideeditbox-wprss_feed'])) {
+            $wpseo_titles['hideeditbox-wprss_feed'] = true;
+            $wpseo_titles['hideeditbox-wprss_feed_item'] = true;
         }
-        update_option( 'wpseo_titles', $wpseo_titles );
+        update_option('wpseo_titles', $wpseo_titles);
+    }
+
+    {
+        // Get existing active feeds that use their own interval
+        $activeFeeds = get_posts([
+            'post_type' => 'wprss_feed',
+            'post_status' => 'publish',
+            'cache_results' => false,
+            'posts_per_page' => -1,
+            'meta_query' => [
+                'relation' => 'AND',
+                [
+                    'key' => 'wprss_state',
+                    'value' => 'active',
+                ],
+                [
+                    'key' => 'wprss_update_interval',
+                    'compare' => '!=',
+                    'value' => 'global',
+                ],
+                [
+                    'key' => 'wprss_update_interval',
+                    'compare' => '!=',
+                    'value' => '',
+                ],
+            ],
+        ]);
+
+        // Schedule their cron jobs
+        foreach ($activeFeeds as $feed) {
+            wprss_feed_source_update_start_schedule($feed->ID);
+        }
     }
 }
-
 
 /**
  * Plugin deactivation procedure
@@ -820,20 +902,12 @@ function wprss_activate() {
  * @since 1.0
  */
 function wprss_deactivate() {
-    // On deactivation remove the cron job
-    wp_clear_scheduled_hook( 'wprss_fetch_all_feeds_hook' );
-    wp_clear_scheduled_hook( 'wprss_truncate_posts_hook' );
-    // Uschedule cron jobs for all feed sources
-    $feed_sources = wprss_get_all_feed_sources();
-    if( $feed_sources->have_posts() ) {
-        // For each feed source
-        while ( $feed_sources->have_posts() ) {
-            // Stop its cron job
-            $feed_sources->the_post();
-            wprss_feed_source_update_stop_schedule( get_the_ID() );
-        }
-        wp_reset_postdata();
-    }
+    // On deactivation remove the cron jobs
+    wp_clear_scheduled_hook(wpra_container()->get('wpra/logging/trunc_logs_cron/event'));
+    wp_clear_scheduled_hook(WPRA_FETCH_ALL_FEEDS_HOOK);
+    wp_clear_scheduled_hook(WPRA_TRUNCATE_ITEMS_HOOK);
+    wpra_clear_all_scheduled_hooks(WPRA_FETCH_FEED_HOOK);
+
     // Flush the rewrite rules
     flush_rewrite_rules();
 }
@@ -848,7 +922,7 @@ function wprss_enable() {
 }
 
 
- /**
+/**
  * Utility filter function that returns FALSE;
  *
  * @since 3.8

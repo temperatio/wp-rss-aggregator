@@ -1,5 +1,22 @@
 <?php
 
+    add_action( 'add_meta_boxes', function () {
+        // Remove some plugin's metaboxes because they're not relevant to the wprss_feed post type.
+        wprss_remove_unrelated_meta_boxes();
+
+        // Remove the default WordPress Publish box, because we will be using custom ones
+        remove_meta_box( 'submitdiv', 'wprss_feed', 'side' );
+        // Custom Publish box
+        add_meta_box(
+            'submitdiv',
+            __( 'Save Feed Source', WPRSS_TEXT_DOMAIN ),
+            'post_submit_meta_box',
+            'wprss_feed',
+            'side',
+            'high'
+        );
+    });
+
     add_action( 'add_meta_boxes', 'wprss_add_meta_boxes', 99);
     /**
      * Set up the input boxes for the wprss_feed post type
@@ -8,21 +25,6 @@
      */
     function wprss_add_meta_boxes() {
         global $wprss_meta_fields;
-
-        // Remove the default WordPress Publish box, because we will be using custom ones
-        remove_meta_box( 'submitdiv', 'wprss_feed', 'side' );
-
-        // Remove some plugin's metaboxes because they're not relevant to the wprss_feed post type.
-        wprss_remove_unrelated_meta_boxes();
-
-        add_meta_box(
-            'submitdiv',                            // $id
-            __( 'Save Feed Source', WPRSS_TEXT_DOMAIN ),      // $title
-            'post_submit_meta_box',                 // $callback
-            'wprss_feed',                           // $page
-            'side',                                 // $context
-            'high'                                   // $priority
-        );
 
         add_meta_box(
             'preview_meta_box',
@@ -91,7 +93,7 @@
             'label'			=> __( 'URL', WPRSS_TEXT_DOMAIN ),
             'id'			=> $prefix .'url',
             'type'			=> 'url',
-            'after'			=> 'wprss_validate_feed_link',
+            'after'			=> 'wprss_after_url',
 			'placeholder'	=>	'https://'
         );
 
@@ -101,26 +103,33 @@
             'type'  => 'number'
         );
 
+        $wprss_meta_fields[ 'unique_titles' ] = array(
+            'label' => __( 'Unique titles only', WPRSS_TEXT_DOMAIN ),
+            'id'    => $prefix . 'unique_titles',
+            'type'  => 'select',
+            'options' => [
+                ['value' => '', 'label' => 'Default'],
+                ['value' => '1', 'label' => 'Yes'],
+                ['value' => '0', 'label' => 'No'],
+            ]
+        );
+
         $wprss_meta_fields[ 'enclosure' ] = array(
             'label' => __( 'Link to enclosure', WPRSS_TEXT_DOMAIN ),
             'id'    => $prefix . 'enclosure',
             'type'  => 'checkbox'
         );
 
-        $wprss_meta_fields[ 'unique_titles' ] = array(
-            'label' => __( 'Unique titles only', WPRSS_TEXT_DOMAIN ),
-            'id'    => $prefix . 'unique_titles',
-            'type'  => 'checkbox'
-        );
-
-        $wprss_meta_fields[ 'source_link' ] = array(
-            'label' => __( 'Link source', WPRSS_TEXT_DOMAIN ),
-            'id'    => $prefix . 'source_link',
-            'type'  => 'boolean_fallback'
-        );
+        if (wprss_is_et_active()) {
+            $wprss_meta_fields[ 'source_link' ] = array(
+                'label' => __( 'Link source', WPRSS_TEXT_DOMAIN ),
+                'id'    => $prefix . 'source_link',
+                'type'  => 'boolean_fallback'
+            );
+        }
 
         $wprss_meta_fields[ 'import_source' ] = array(
-            'label'   => __( 'Import source info', WPRSS_TEXT_DOMAIN ),
+            'label'   => __( 'Use source info', WPRSS_TEXT_DOMAIN ),
             'id'      => $prefix . 'import_source',
             'type'    => 'checkbox',
         );
@@ -280,14 +289,21 @@
 
 
     /**
-     * Adds the link that validates the feed
+     * Renders content after the URL field
+     *
      * @since 3.9.5
      */
-    function wprss_validate_feed_link() {
+    function wprss_after_url() {
         ?>
             <i id="wprss-url-spinner" class="fa fa-fw fa-refresh fa-spin wprss-updating-feed-icon" title="<?php _e( 'Updating feed source', WPRSS_TEXT_DOMAIN ) ?>"></i>
             <div id="wprss-url-error" style="color:red"></div>
-            <a href="#" id="validate-feed-link">Validate feed</a>
+            <a href="#" id="validate-feed-link" class="wprss-after-url-link">Validate feed</a>
+            <span> | </span>
+            <a href="https://kb.wprssaggregator.com/article/55-how-to-find-an-rss-feed"
+               class="wprss-after-url-link"
+                target="_blank">
+                <?= __('How to find an RSS feed', 'wprss') ?>
+            </a>
             <script type="text/javascript">
                 (function($){
                     // When the DOM is ready
@@ -354,7 +370,11 @@
         if ( defined( 'DOING_CRON' ) && DOING_CRON )
             return;
 
-        if ( isset($_POST['wpra_feed_def_ft_image']) ) {
+        $postType = class_exists('WPRSS_FTP_Meta')
+            ? WPRSS_FTP_Meta::get_instance()->get($post_id, 'post_type')
+            : 'wprss_feed_item';
+
+        if ($postType === 'wprss_feed_item' && isset($_POST['wpra_feed_def_ft_image']) ) {
             $def_ft_image_id = $_POST['wpra_feed_def_ft_image'];
 
             if (empty($def_ft_image_id)) {
@@ -374,9 +394,9 @@
         foreach ( $meta_fields as $field ) {
             $old = get_post_meta( $post_id, $field[ 'id' ], true );
             $new = trim( $_POST[ $field[ 'id' ] ] );
-            if ( $new !== '' && $new != $old ) {
+            if ( $new !== $old || empty($old) ) {
                 update_post_meta( $post_id, $field[ 'id' ], $new );
-            } elseif ( '' == $new && $old ) {
+            } elseif ( empty($new) && !empty($old) ) {
                 delete_post_meta( $post_id, $field[ 'id' ], $old );
             }
         } // end foreach
@@ -481,7 +501,12 @@
                     <?php wprss_log_obj( 'Failed to preview feed.', $feed->get_error_message(), NULL, WPRSS_LOG_LEVEL_INFO ); ?>
                 </span>
 				<?php
-				echo wpautop( sprintf( __( 'Not sure where to find the RSS feed on a website? <a target="_blank" href="%1$s">Click here</a> for a visual guide. ', WPRSS_TEXT_DOMAIN ), 'https://webtrends.about.com/od/webfeedsyndicationrss/ss/rss_howto.htm' ) );
+				echo wpautop(
+				        sprintf(
+				                __('Not sure where to find the RSS feed on a website? <a target="_blank" href="%1$s">Click here</a> for a visual guide.', 'wprss'),
+                                'https://kb.wprssaggregator.com/article/55-how-to-find-an-rss-feed'
+                        )
+                );
             }
             
         }
@@ -534,6 +559,7 @@
         $activate = get_post_meta( $post->ID, 'wprss_activate_feed', TRUE );
         $pause = get_post_meta( $post->ID, 'wprss_pause_feed', TRUE );
         $update_interval = get_post_meta( $post->ID, 'wprss_update_interval', TRUE );
+        $update_time = get_post_meta( $post->ID, 'wprss_update_time', TRUE );
 
         $age_limit = get_post_meta( $post->ID, 'wprss_age_limit', true );
         $age_unit = get_post_meta( $post->ID, 'wprss_age_unit', true );
@@ -632,6 +658,9 @@
                     <option value="<?php echo $value; ?>" <?php selected( $update_interval, $value ); ?> ><?php echo $text; ?></option>
                 <?php endforeach; ?>
                 </select>
+                <label>
+                    <input type="time" name="wpra_feed[update_time]" value="<?php echo esc_attr($update_time); ?>">
+                </label>
             </div>
         </div>
 

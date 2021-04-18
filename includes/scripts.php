@@ -76,6 +76,34 @@
         ));
 
         wp_register_script( 'wprss-gallery-js', WPRSS_JS . 'gallery.js', array('jquery'), $version, true );
+
+        wp_register_script('wpra-tools', WPRSS_JS . 'admin/tools/main.js', ['jquery'], $version, true);
+        wp_register_script('wpra-logs-tool', WPRSS_JS . 'admin/tools/logs.js', ['jquery'], $version, true);
+        wp_register_script('wpra-blacklist-tool', WPRSS_JS . 'admin/tools/blacklist.js', ['jquery'], $version, true);
+
+        $wpSchedules = wp_get_schedules();
+        $globSchedule = wprss_get_general_setting('cron_interval');
+        $customSchedule = [
+            'display' => __('Use Global Cron', 'wprss'),
+            'interval' => $wpSchedules[$globSchedule]['interval'],
+        ];
+        $schedules = array_merge(['global' => $customSchedule], $wpSchedules);
+
+        wp_register_script('wpra-crons-tool', WPRSS_JS . 'admin/tools/crons.js', ['jquery'], $version, true);
+        wp_localize_script('wpra-crons-tool', 'WpraCronsTool', [
+            'restUrl' => trailingslashit(rest_url()),
+            'restApiNonce' => wp_create_nonce('wp_rest'),
+            'globalInterval' => $globSchedule,
+            'globalTime' => wprss_get_global_update_time(),
+            'globalWord' => __('Global', 'wprss'),
+            'perPage' => 30,
+            'schedules' => $schedules
+        ]);
+
+        wp_register_script('wpra-reset-tool', WPRSS_JS . 'admin/tools/reset.js', ['jquery'], $version, true);
+        wp_localize_script('wpra-reset-tool', 'WpraResetTool', [
+            'message' => __('Are you sure you want to do this? This operation cannot be undone.', 'wprss')
+        ]);
     }
 
 
@@ -160,6 +188,14 @@
 
         if ($pageBase === 'wprss_feed_page_wprss-help') {
             wp_enqueue_script( 'wprss-admin-help' );
+        }
+
+        if ($pageBase === 'wprss_feed_page_wpra_tools') {
+            wp_enqueue_script('wpra-tools');
+            wp_enqueue_script('wpra-logs-tool');
+            wp_enqueue_script('wpra-blacklist-tool');
+            wp_enqueue_script('wpra-crons-tool');
+            wp_enqueue_script('wpra-reset-tool');
         }
 
         if (wprss_is_help_beacon_enabled()) {

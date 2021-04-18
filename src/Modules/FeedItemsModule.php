@@ -12,7 +12,9 @@ use RebelCode\Wpra\Core\Entities\Collections\FeedItemCollection;
 use RebelCode\Wpra\Core\Entities\Properties\TimestampProperty;
 use RebelCode\Wpra\Core\Entities\Properties\WpFtImageUrlProperty;
 use RebelCode\Wpra\Core\Entities\Properties\WpPostEntityProperty;
-use RebelCode\Wpra\Core\Entities\Properties\WpraSourceDefaultProperty;
+use RebelCode\Wpra\Core\Entities\Properties\WpPostPermalinkProperty;
+use RebelCode\Wpra\Core\Entities\Properties\WpraItemSourceProperty;
+use RebelCode\Wpra\Core\Entities\Properties\WpraPostTypeDependentProperty;
 use RebelCode\Wpra\Core\Handlers\AddCptMetaCapsHandler;
 use RebelCode\Wpra\Core\Handlers\NullHandler;
 use RebelCode\Wpra\Core\Handlers\RegisterCptHandler;
@@ -40,28 +42,52 @@ class FeedItemsModule implements ModuleInterface
             'wpra/feeds/items/properties' => function (ContainerInterface $c) {
                 $sourceSchema = $c->get('wpra/feeds/sources/schema');
 
+                $idProp = new Property('ID');
+
+                $urlProp = new WpraPostTypeDependentProperty(
+                    $idProp,
+                    new Property('wprss_item_permalink'),
+                    new WpPostPermalinkProperty($idProp)
+                );
+
+                $enclosureProp = new WpraPostTypeDependentProperty(
+                    $idProp,
+                    new Property('wprss_item_enclosure'),
+                    new Property('wprss_ftp_enclosure_link')
+                );
+
                 return [
-                    'id' => new Property('ID'),
+                    'id' => $idProp,
                     'title' => new Property('post_title'),
                     'content' => new DefaultingProperty(['post_content', 'post_excerpt']),
                     'excerpt' => new DefaultingProperty(['post_excerpt', 'post_content']),
-                    'url' => new Property('wprss_item_permalink'),
-                    'permalink' => new Property('wprss_item_permalink'),
-                    'enclosure' => new Property('wprss_item_enclosure'),
+                    'url' => $urlProp,
+                    'permalink' => $urlProp,
+                    'enclosure' => $enclosureProp,
+                    'enclosure_type' => new Property('wprss_item_enclosure_type'),
                     'author' => new Property('wprss_item_author'),
                     'date' => new Property('wprss_item_date'),
                     'timestamp' => new TimestampProperty(new Property('post_date_gmt'), 'Y-m-d H:i:s'),
-                    'source_id' => new Property('wprss_feed_id'),
-                    'source_name' => new WpraSourceDefaultProperty('wprss_source_name', 'post_title'),
-                    'source_url' => new WpraSourceDefaultProperty('wprss_source_url', 'wprss_url'),
                     'ft_image' => new Property('_thumbnail_id'),
-                    'ft_image_url' => new WpFtImageUrlProperty('_thumbnail_id'),
+                    'ft_image_url' => new WpFtImageUrlProperty('_thumbnail_id', 'wprss_item_thumbnail'),
                     'is_using_def_image' => new Property('wprss_item_is_using_def_image'),
                     'images' => new Property('wprss_images'),
                     'best_image' => new Property('wprss_best_image'),
                     'embed_url' => new Property('wprss_item_embed_url'),
                     'is_yt' => new Property('wprss_item_is_yt'),
                     'yt_embed_url' => new Property('wprss_item_yt_embed_url'),
+                    'audio_url' => new Property('wprss_item_audio'),
+                    'source_id' => new Property('wprss_feed_id'),
+                    'source_name' => new WpraItemSourceProperty(
+                        new Property('wprss_item_source_name'),
+                        new Property('post_title'),
+                        'use_source_info'
+                    ),
+                    'source_url' => new WpraItemSourceProperty(
+                        new Property('wprss_item_source_url'),
+                        new Property('wprss_url'),
+                        'use_source_info'
+                    ),
                     // @todo remove after templates 0.2
                     'source' => new WpPostEntityProperty('wprss_feed_id', $sourceSchema, function ($schema, $store) {
                         return new EntityDataSet(new Entity($schema, $store));
@@ -238,5 +264,12 @@ class FeedItemsModule implements ModuleInterface
     {
         add_action('init', $c->get('wpra/feeds/items/handlers/register_cpt'));
         add_action('admin_init', $c->get('wpra/feeds/items/handlers/add_cpt_capabilities'));
+
+        // Set the public permalink of feed items to be equal to the URL to the original article
+        add_filter('post_type_link', function($url, $post) {
+            return (get_post_type($post->ID) === 'wprss_feed_item')
+                ? get_post_meta($post->ID, 'wprss_item_permalink', true)
+                : $url;
+        }, 10, 2);
     }
 }
